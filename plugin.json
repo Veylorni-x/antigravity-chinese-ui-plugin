@@ -1,0 +1,20 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "chinese-ui-pack",
+  "displayName": "简体中文界面",
+  "version": "1.0.0",
+  "description": "为 Windows 版 Antigravity 2.34.0 安装和恢复本地简体中文界面。",
+  "logo": "assets/logo.svg",
+  "homepage": "https://github.com/Veylorni-x/antigravity-chinese-ui-plugin",
+  "repository": "https://github.com/Veylorni-x/antigravity-chinese-ui-plugin",
+  "suggestedPrompts": [
+    "安装 Antigravity 简体中文界面",
+    "查看汉化状态",
+    "恢复 Antigravity 英文界面"
+  ],
+  "author": {
+    "name": "Veylorni-x",
+    "url": "https://github.com/Veylorni-x"
+  },
+  "license": "MIT"
+}
