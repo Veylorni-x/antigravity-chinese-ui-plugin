@@ -7,27 +7,35 @@ description: Install, check, or restore the Simplified Chinese interface for Win
 
 支持 Windows 版 Antigravity 2.34.0。通过插件脚本安装、查看状态或恢复界面。
 
+## 脚本位置
+
+补丁脚本是本技能目录（本 SKILL.md 所在目录）下的 `scripts/patch.py`。命令的当前目录通常是用户的工作区，不是插件目录，所以必须用绝对路径调用，不能直接写 `scripts/patch.py`。
+
+插件按默认位置安装时，PowerShell 中的完整路径为：
+
+    $env:USERPROFILE\.gemini\config\plugins\chinese-ui-pack\skills\localize-ui\scripts\patch.py
+
+如果该路径不存在，就用本 SKILL.md 的实际所在目录拼出路径。下文用 `<patch.py>` 代指这个绝对路径。没有 `python` 命令时可改用 `py -3`。
+
 ## 查看状态
 
-运行命令：
-
-    python -X utf8 scripts/patch.py status
+    python -X utf8 "<patch.py>" status
 
 ## 安装中文界面
 
 先运行：
 
-    python -X utf8 scripts/patch.py install
+    python -X utf8 "<patch.py>" install
 
-如果脚本提示 Antigravity 仍在运行，不要结束它的进程。告诉用户保存工作并退出 Antigravity，然后让用户双击插件安装目录中的 scripts/install-zh-cn.cmd。
+如果脚本提示 Antigravity 仍在运行，不要结束它的进程。告诉用户保存工作并退出 Antigravity，然后让用户双击插件根目录中的 `scripts\install-zh-cn.cmd`。
 
 ## 恢复英文界面
 
 先运行：
 
-    python -X utf8 scripts/patch.py restore
+    python -X utf8 "<patch.py>" restore
 
-如果脚本提示 Antigravity 仍在运行，不要结束它的进程。告诉用户保存工作并退出 Antigravity，然后让用户双击插件安装目录中的 scripts/restore-english.cmd。
+如果脚本提示 Antigravity 仍在运行，不要结束它的进程。告诉用户保存工作并退出 Antigravity，然后让用户双击插件根目录中的 `scripts\restore-english.cmd`。
 
 ## 结果
 

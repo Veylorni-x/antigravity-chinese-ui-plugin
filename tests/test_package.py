@@ -1,5 +1,4 @@
 import gzip
-import hashlib
 import json
 from pathlib import Path
 import re
@@ -14,7 +13,7 @@ class PluginPackageTests(unittest.TestCase):
         manifest = json.loads((ROOT / "plugin.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["name"], "chinese-ui-pack")
         self.assertRegex(manifest["name"], r"^[a-z0-9]+(-[a-z0-9]+)*$")
-        self.assertEqual(manifest["version"], "1.0.0")
+        self.assertEqual(manifest["version"], "1.0.1")
         skill = ROOT / "skills" / "localize-ui" / "SKILL.md"
         text = skill.read_text(encoding="utf-8")
         self.assertRegex(text, r"(?m)^name: localize-ui$")
@@ -31,21 +30,33 @@ class PluginPackageTests(unittest.TestCase):
         self.assertIn("PAYLOAD = Path(__file__).with_name",
                       script_path.read_text(encoding="utf-8"))
 
-    def test_skill_and_double_click_installers_share_identical_payloads(self):
+    def test_installer_and_payload_are_bundled_once(self):
         for relative in ("patch.py", "zh-CN.json.gz"):
-            skill_file = ROOT / "skills" / "localize-ui" / "scripts" / relative
-            installer_copy = ROOT / "scripts" / relative
-            self.assertEqual(
-                hashlib.sha256(skill_file.read_bytes()).digest(),
-                hashlib.sha256(installer_copy.read_bytes()).digest(),
-                relative,
-            )
+            self.assertTrue((ROOT / "skills" / "localize-ui" / "scripts" / relative).is_file())
+            self.assertFalse((ROOT / "scripts" / relative).exists(), relative)
 
     def test_command_files_target_the_bundled_installer(self):
-        install = (ROOT / "scripts" / "install-zh-cn.cmd").read_text(encoding="utf-8")
-        restore = (ROOT / "scripts" / "restore-english.cmd").read_text(encoding="utf-8")
-        self.assertIn("patch.py\" install", install)
-        self.assertIn("patch.py\" restore", restore)
+        for name, action in (("install-zh-cn.cmd", "install"),
+                             ("restore-english.cmd", "restore")):
+            raw = (ROOT / "scripts" / name).read_bytes()
+            text = raw.decode("utf-8")
+            self.assertFalse(raw.startswith(b"\xef\xbb\xbf"), name)
+            self.assertEqual(raw.count(b"\n"), raw.count(b"\r\n"), name)
+            self.assertIn(r"%~dp0..\skills\localize-ui\scripts\patch.py", text)
+            self.assertIn(f'"%SCRIPT%" {action}', text)
+            self.assertIn("py -3", text)
+            self.assertIn("python", text)
+
+    def test_skill_uses_absolute_script_path(self):
+        text = (ROOT / "skills" / "localize-ui" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn(r"chinese-ui-pack\skills\localize-ui\scripts\patch.py", text)
+        self.assertNotRegex(text, r"(?m)^\s+python -X utf8 scripts/patch\.py")
+
+    def test_manifest_has_only_supported_fields(self):
+        manifest = json.loads((ROOT / "plugin.json").read_text(encoding="utf-8"))
+        supported = {"name", "description", "logo", "suggestedPrompts", "displayName",
+                     "version", "author", "homepage", "repository", "disabled"}
+        self.assertLessEqual(set(manifest), supported)
 
     def test_no_automatic_hooks_or_external_tools_are_configured(self):
         self.assertFalse((ROOT / "hooks.json").exists())

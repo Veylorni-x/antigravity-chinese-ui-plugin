@@ -114,6 +114,20 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "文字位置有误"):
             patch.translate(self.original, bad)
 
+    def test_updated_dictionary_upgrades_from_english_backup(self):
+        patch.run("install", self.root, fixture=True)
+        updated_payload = {
+            "version": patch.VERSION,
+            "original": patch.sha(self.original),
+            "edits": {"dist/label.js": [[0, 4, "文件菜单"]]},
+        }
+        upgraded = patch.translate(self.original, updated_payload)
+        updated_payload["chinese"] = patch.sha(upgraded)
+        self.write_payload(updated_payload)
+        self.assertIn("词库已更新", patch.run("status", self.root))
+        self.assertIn("已安装", patch.run("install", self.root, fixture=True))
+        self.assertEqual(self.target.read_bytes(), upgraded)
+
 
 if __name__ == "__main__":
     unittest.main()

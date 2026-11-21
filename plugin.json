@@ -1,8 +1,7 @@
 {
-  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "chinese-ui-pack",
   "displayName": "简体中文界面",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "为 Windows 版 Antigravity 2.34.0 安装和恢复本地简体中文界面。",
   "logo": "assets/logo.svg",
   "homepage": "https://github.com/Veylorni-x/antigravity-chinese-ui-plugin",
@@ -15,6 +14,5 @@
   "author": {
     "name": "Veylorni-x",
     "url": "https://github.com/Veylorni-x"
-  },
-  "license": "MIT"
+  }
 }

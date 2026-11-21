@@ -225,11 +225,24 @@ def run(action, root, fixture=False):
     current = target.read_bytes()
     current_hash = sha(current)
     original_hash, chinese_hash = payload["original"], payload["chinese"]
-    if current_hash not in (original_hash, chinese_hash):
-        version = json.loads(Archive(current).read("package.json")).get("version", "未知")
+    backup_bytes = backup.read_bytes() if backup.is_file() else None
+    has_valid_backup = backup_bytes is not None and sha(backup_bytes) == original_hash
+    version = json.loads(Archive(current).read("package.json")).get("version", "未知")
+    is_outdated_patch = (
+        current_hash not in (original_hash, chinese_hash)
+        and version == VERSION
+        and has_valid_backup
+    )
+    if current_hash not in (original_hash, chinese_hash) and not is_outdated_patch:
         raise ValueError(f"当前安装是 {version}，界面文件与本补丁不匹配。请使用对应的补丁。")
     if action == "status":
-        return f"Antigravity {VERSION}：{'已汉化' if current_hash == chinese_hash else '英文原版'}。"
+        if current_hash == chinese_hash:
+            state = "已汉化"
+        elif is_outdated_patch:
+            state = "已汉化（词库已更新，退出软件后运行 install-zh-cn.cmd 即可生效）"
+        else:
+            state = "英文原版"
+        return f"Antigravity {VERSION}：{state}。"
     if action == "install" and current_hash == chinese_hash:
         return "已经安装简体中文。"
     if action == "restore" and current_hash == original_hash:
@@ -237,21 +250,22 @@ def run(action, root, fixture=False):
     if not fixture and desktop_is_running():
         raise ValueError("请先正常退出 Antigravity 桌面版，再运行此文件。")
     if action == "install":
-        localized = translate(current, payload)
+        base_english = backup_bytes if is_outdated_patch else current
+        localized = translate(base_english, payload)
         if sha(localized) != chinese_hash:
             raise ValueError("汉化文件验证失败，原文件已保留。")
         if not backup.exists():
-            write_atomic(backup, current)
+            write_atomic(backup, base_english)
         if sha(backup.read_bytes()) != original_hash:
             raise ValueError("现有的英文备份与当前版本不一致，无法安全安装。")
-        write_atomic(target, localized, original_hash)
+        write_atomic(target, localized, current_hash)
         return "简体中文已安装。现在可以打开 Antigravity。"
     if not backup.is_file():
         raise ValueError("没有找到这次安装保存的英文备份。")
     original = backup.read_bytes()
     if sha(original) != original_hash:
         raise ValueError("英文备份与当前版本不一致。")
-    write_atomic(target, original, chinese_hash)
+    write_atomic(target, original, current_hash)
     return "英文界面已恢复。现在可以打开 Antigravity。"
 
 
